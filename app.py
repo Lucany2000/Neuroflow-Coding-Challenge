@@ -1,9 +1,21 @@
 from flask import Flask, request, render_template, redirect, url_for, Markup 
 from flask_restful import Resource, Api, abort, reqparse
-import datetime
-
+from datetime import date
+import sqlite3
 
 app = Flask(__name__)
+# db = SQLAlchemy(app)
+# app.config["SQLAlCHEMY_DATABASE_URI"] = "sqlite///database.db"
+
+# class moodModel(db.Model):
+#     date = db.Column(db.String, primary_key=True)
+#     mood = db.Column(db.String, nullable=True)
+
+#     def __repr__(self):
+#         return f"{today} = {feeling}"
+
+# def create_database():
+#     return db.create_all()
 # api = Api(app)
 
 # login_put = reqparse.RequestParser()
@@ -29,7 +41,7 @@ app = Flask(__name__)
 
 valid_username = "john_doe123"
 valid_password = "P45Sw0rd"
-
+streak_counter = None
 # @app.route("/")
 # def home():
 #     return render_template("Home.html")   
@@ -39,8 +51,8 @@ def login():
     if request.method == "POST":
         user = request.form["username"]
         passkey = request.form["password"]
-        if user == valid_username and key == valid_password:
-            return redirect(url_for("mood", profile = f"Welcome {user}"))
+        if user == valid_username and passkey == valid_password:
+            return redirect(url_for("mood", profile = user))
         else:
             if user == "" or passkey == "":
                 error_msg_user = ""
@@ -69,10 +81,55 @@ def login():
 # def create():
 #     return render_template("create.html")
 
-@app.route('/mood/<profile>')
-def mood(profile):
-    return f"<h1>{profile}</h1>"    
+@app.route('/mood', methods=["POST", "GET"])
+def mood():
+    if request.method == "POST":
+        current_mood = request.form["feeling"]
+        today = date.today()
+        current_date = today.strftime("%B %d, %Y")
 
+        with sqlite3.connect("mood.db") as con:
+            cur = con.cursor()
+            cur.execute("select * from Timeline")  
+            rows = cur.fetchall()
+            try:
+                if len(rows) == 0:
+                    streak_counter = 0
+                else:
+                    streak_counter = rows[-1][2]
+            except:
+                pass            
+
+            if current_mood == "":
+                streak_counter = 1
+            else:
+                streak_counter += 1
+
+            cur.execute("INSERT or IGNORE into Timeline(today_date, mood, streak_counter) values (?,?,?)", (current_date, current_mood, streak_counter))
+            con.commit()
+        # con.row_factory = sqlite3.Row          
+        cur.execute("select * from Timeline")  
+        rows = cur.fetchall()
+
+        response = '''Thank you for your response!'''
+
+        if streak_counter > 1:
+            streak = f'''You're on a streak of {streak_counter}!'''
+            return render_template("Mood.html", rows=rows, question=response, streak=streak)
+        else:
+            return render_template("Mood.html", rows=rows, question=response)    
+        con.close() 
+
+    else:
+        question = '''How are you feeling today?'''
+        input_line = Markup('''<input type="text" name="feeling" size="50" />''')        
+        with sqlite3.connect("mood.db") as con:
+            cur = con.cursor()
+        # con.row_factory = sqlite3.Row          
+        cur.execute("select * from Timeline")  
+        rows = cur.fetchall()
+        return render_template("Mood.html", rows=rows, question=question, input=input_line)
+        con.close() 
 
 # @app.route("/<mood>")
 # def user(mood):
