@@ -1,48 +1,11 @@
 from flask import Flask, request, render_template, redirect, url_for, Markup 
-from flask_restful import Resource, Api, abort, reqparse
 from datetime import date
 import sqlite3
 
 app = Flask(__name__)
-# db = SQLAlchemy(app)
-# app.config["SQLAlCHEMY_DATABASE_URI"] = "sqlite///database.db"
-
-# class moodModel(db.Model):
-#     date = db.Column(db.String, primary_key=True)
-#     mood = db.Column(db.String, nullable=True)
-
-#     def __repr__(self):
-#         return f"{today} = {feeling}"
-
-# def create_database():
-#     return db.create_all()
-# api = Api(app)
-
-# login_put = reqparse.RequestParser()
-# login_put.add_argument("username", type=str, help="Request Username", required=True)
-# login_put.add_argument("password", type=str, help="Request Password", required=True)
-
-# names = {}
-
-# class Login(Resource):
-#     def get(self, credentials):
-#         return {"data":"name"}
-
-#     def post(self, credentials):
-#          return {"data":"posted"}
-
-#     def put(self, credentials):
-#         print(request.form["username"])
-#         args = login_put.parse_args()
-#         return {credentials:args}       
-
-# api.add_resource(Login, "/login/<string:credentials>")
 
 valid_username = "john_doe123"
-valid_password = "P45Sw0rd"
-# @app.route("/")
-# def home():
-#     return render_template("Home.html")   
+valid_password = "P45Sw0rd" 
 
 @app.route('/', methods=["POST", "GET"])
 def login():
@@ -75,10 +38,6 @@ def login():
     else:
         return render_template("Login.html", error_msg="")    
 
-# @app.route('/create')
-# def create():
-#     return render_template("create.html")
-
 @app.route('/mood', methods=["POST", "GET"])
 def mood():
     if request.method == "POST":
@@ -107,8 +66,7 @@ def mood():
                 pass                       
 
             cur.execute("INSERT or IGNORE into Timeline(today_date, mood, streak_counter) values (?,?,?)", (current_date, current_mood, streak_counter))
-            con.commit()
-        # con.row_factory = sqlite3.Row          
+            con.commit()     
         cur.execute("select * from Timeline")  
         rows = cur.fetchall()
 
@@ -125,33 +83,11 @@ def mood():
         question = '''How are you feeling today?'''
         input_line = Markup('''<input type="text" name="feeling" size="50" />''')        
         with sqlite3.connect("mood.db") as con:
-            cur = con.cursor()
-        # con.row_factory = sqlite3.Row          
+            cur = con.cursor()          
         cur.execute("select * from Timeline")  
         rows = cur.fetchall()
         return render_template("Mood.html", rows=rows, question=question, input=input_line)
         con.close() 
-
-# @app.route("/<mood>")
-# def user(mood):
-#     return f"hello {mood}!"
-
-# @app.route("/admin")
-# def admin():
-#     return redirect(url_for("index"))
-
-# @app.route("/login", method=["GET", "POST"])
-# def login():
-#     return "Hello world"
-
-# @app.route("/create", method=["GET", "POST"])
-# def create():
-#     return render_template()    
-
-# @app.route("/<usr>")
-# def user(usr):
-#     return f"<h1>{usr}<h1>"
-
 
 if __name__ == "__main__":
     app.run(debug=True)
