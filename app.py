@@ -24,7 +24,6 @@ app = Flask(__name__)
 
 # names = {}
 
-
 # class Login(Resource):
 #     def get(self, credentials):
 #         return {"data":"name"}
@@ -41,7 +40,6 @@ app = Flask(__name__)
 
 valid_username = "john_doe123"
 valid_password = "P45Sw0rd"
-streak_counter = None
 # @app.route("/")
 # def home():
 #     return render_template("Home.html")   
@@ -95,15 +93,18 @@ def mood():
             try:
                 if len(rows) == 0:
                     streak_counter = 0
+                    if current_mood == "":
+                        streak_counter = 0
+                    else:
+                        pass
                 else:
                     streak_counter = rows[-1][2]
+                    if current_mood == "":
+                        streak_counter = 1
+                    else:
+                        streak_counter += 1
             except:
-                pass            
-
-            if current_mood == "":
-                streak_counter = 1
-            else:
-                streak_counter += 1
+                pass                       
 
             cur.execute("INSERT or IGNORE into Timeline(today_date, mood, streak_counter) values (?,?,?)", (current_date, current_mood, streak_counter))
             con.commit()
@@ -149,7 +150,8 @@ def mood():
 
 # @app.route("/<usr>")
 # def user(usr):
-#     return f"<h1>{usr}<h1>"    
+#     return f"<h1>{usr}<h1>"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
